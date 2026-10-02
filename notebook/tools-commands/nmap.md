@@ -1,0 +1,5 @@
+- `nmap -sC -sV -T4 -p- <ip>`
+	- **`-sC`**: Executa os **scripts padrão** do Nmap (NSE) para enumeração básica de serviços, descoberta de diretórios comuns, informações de certificado, etc.
+	- **`-sV`**: Ativa a **detecção de versão** dos serviços rodando nas portas abertas.
+    - **`-T4`**: Define um perfil de **velocidade mais rápido** (agressivo), ideal para redes locais ou alvos que respondem bem, economizando tempo.
+    - **`-p-`**: Varre **todas as 65.535 portas** TCP (por padrão, o Nmap varre apenas as 1000 mais comuns).
