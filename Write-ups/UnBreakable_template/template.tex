@@ -1,0 +1,109 @@
+\documentclass[12pt]{article} % Corpo do texto em tamanho 12
+
+% --- Configurações de Margem e Fonte ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper, margin=2cm]{geometry} % Margem mínima de 2cm em todos os lados
+\usepackage{times} % Fonte Times New Roman
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{titlesec} % Pacote para personalizar tamanhos de títulos
+
+% --- Configuração de Tamanho de Títulos ---
+% Títulos de seção (14pt ou 16pt). Definido aqui como 16pt para destaque.
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection}{1em}{}
+
+% --- Configuração de Blocos de Código (Fonte Monoespaçada) ---
+\definecolor{codebg}{gray}{0.95} % Fundo cinza claro
+\lstset{
+    basicstyle=\ttfamily\small, % Fonte monoespaçada
+    backgroundcolor=\color{codebg},
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{black!30},
+    showstringspaces=false,
+    captionpos=b % Legenda abaixo do bloco
+}
+
+% --- Cabeçalho e Rodapé ---
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Simple CTF - Lurian Lima} % Nome do desafio e autor no cabeçalho
+\fancyhead[R]{Write-Up}
+\fancyfoot[C]{\thepage} % Numeração de páginas obrigatória
+
+\begin{document}
+
+% --- Capa ---
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge \textbf{Write-Up de Segurança Ofensiva} \par}
+    \vspace{1.5cm}
+    {\Large \textbf{Desafio:} Simple CTF \par}
+    {\large \textbf{Plataforma:} Try Hack Me \par}
+    {\large \textbf{Autor:} Lurian Lima \par}
+    \vspace{2cm}
+    {\large \textbf{Data de Resolução:} \today \par}
+    \vfill
+\end{titlepage}
+
+% --- Sumário ---
+\tableofcontents
+\newpage
+
+% ---------------
+% Resultados da enumeração. Use o comando abaixo para inserir screenshots:
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=0.8\textwidth]{screenshot_nmap.png}
+%     \caption{Legenda descritiva da imagem inserida imediatamente após o texto.}
+% \end{figure}
+
+% \begin{lstlisting}[caption={Comando de exploração utilizado}]
+% # Exemplo de bloco de código com fundo destacado
+% nmap -sV -sC -oN scan.txt 10.10.10.10
+% \end{lstlisting}
+% ---------------
+
+% --- 2.3 Visão Geral ---
+\section{Visão Geral}
+% Parágrafo descrevendo o vetor principal de ataque sem spoiler detalhado. Deve responder: o que é o desafio,
+% qual a superfície de ataque explorada e qual foi o caminho geral até o objetivo.
+
+% --- 2.4 Reconhecimento ---
+\section{Reconhecimento}
+% Resultados da enumeração externa: portas abertas, serviços identificados, versões relevantes, tecnologias
+% detectadas. Incluir comandos usados e os trechos de output mais relevantes. Não incluir informações obtidas
+% após o foothold inicial.
+
+% --- 2.5 Exploração ---
+\section{Exploração}
+% Descrição técnica do vetor de entrada. Deve incluir o raciocínio que levou à identificação da vulnerabilidade,
+% os payloads ou scripts utilizados (comentados), exploits públicos utilizados e os outputs que confirmam o
+% acesso. Cada passo deve ser justificado, não apenas listado.
+
+% --- 2.6 Movimentação Lateral (Se aplicável) ---
+\section{Movimentação Lateral}
+% Aplicável quando há múltiplos usuários ou pivoting entre serviços. Descrever a escalada horizontal com o
+% mesmo padrão da seção anterior.
+
+% --- 2.7 Escalada de Privilégios ---
+\section{Escalada de Privilégios}
+% Descrever o vetor de privesc identificado, o processo de enumeração local que o revelou (linpeas, sudo -l,
+% capabilities, etc.) e a exploração realizada. Incluir o comando final que comprova o acesso root/SYSTEM
+
+% --- 2.8 Conclusão ---
+\section{Conclusão}
+% Resumo técnico de 3 a 5 linhas sintetizando a cadeia de exploração completa, do reconhecimento à flag.
+
+% --- 2.9 Referências ---
+\section{Referências}
+% Espaço destinado às fontes utilizadas para a exploração: links dos repositórios dos exploits públicos e links
+% das CVEs correspondentes.
+
+\end{document}
