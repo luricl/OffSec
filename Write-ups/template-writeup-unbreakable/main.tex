@@ -1,0 +1,166 @@
+\documentclass[12pt]{article}
+
+% pacotes obrigatorios e formatacao
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage[margin=2cm]{geometry} % margem minima de 2cm exigida pela metodologia
+\usepackage{times} % fonte times new roman
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+
+\definecolor{citapurple}{HTML}{6A1B9A} % tom roxo escuro
+% configuracao de links (hierarquia e cores)
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,       % cor para sumario, figuras (\ref) e secoes
+    urlcolor=blue,         % cor para links de internet (\url, \href)
+    citecolor=citapurple,  % cor para citacoes bibliograficas (\cite) em roxo
+    pdftitle={WriteUp - CTF},
+}
+
+
+% configuracao dos blocos de codigo (monoespacado com fundo destacado)
+\definecolor{codebg}{gray}{0.95}
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    frameround=tttt,
+    framesep=5pt,
+    rulecolor=\color{gray!30},
+    showstringspaces=false,
+    keywordstyle=\color{blue},
+    captionpos=b,
+    inputencoding=utf8,
+    extendedchars=true
+}
+
+% configuracao de cabecalho e rodape
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small \textit{Nome da Maquina - Plataforma}}
+\rhead{\small \textit{Autor: nome (nickname)}}
+\rfoot{\thepage} % numeracao de paginas obrigatoria
+
+\begin{document}
+
+% 2.1. capa
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge \textbf{Nome da Máquina: Write Up}}\\[0.5cm]
+    {\large \textbf{Plataforma:} HackTheBox}\\[1.5cm]
+    
+    \vfill
+    
+    % espaco dedicado para logotipo (plataforma, unbreakable ou da máquina)
+    \begin{figure}[h!]
+        \centering
+        % substitua 'example-image' pelo arquivo da logo na pasta do projeto
+        \includegraphics[width=0.32\textwidth]{unbreakableLogo_3.png} 
+    \end{figure}
+    
+    \vfill
+    
+    \begin{table}[h!]
+        \centering
+        \small
+        \renewcommand{\arraystretch}{1.3}
+        \begin{tabular}{ll}
+            \textbf{Máquina / Desafio:} & Nome da Máquina \\
+            \textbf{Dificuldade:}       & Fácil / Média / Difícil / Insane \\
+            \textbf{Data de Resolução:} & DD/MM/AAAA \\
+            \textbf{Autor:}             & Nome Completo (nickname) \\
+            \textbf{Matrícula:}         & 000000000 \\
+        \end{tabular}
+    \end{table}
+    
+    \vspace*{1.5cm}
+    {\large \today}
+\end{titlepage}
+
+\newpage
+
+% 2.2. sumario
+% indice gerado automaticamente com numeracao de paginas
+\tableofcontents
+\newpage
+
+% 2.3. visao geral
+% paragrafo descrevendo o vetor principal de ataque sem spoiler detalhado.
+% deve responder: o que e o desafio, qual a superficie explorada e o caminho geral ate o objetivo.
+\section{Visão Geral}
+A máquina apresenta um cenário focado na exploração de falhas em aplicações web e configurações inadequadas no sistema operacional. O acesso inicial foi obtido através da identificação de vulnerabilidades na autenticação da aplicação, permitindo a execução remota de código. Em seguida, a escalada de privilégios explorou permissões locais mal configuradas para obter controle total do servidor como \texttt{root}.
+
+
+% 2.4. reconhecimento
+% resultados da enumeracao externa: portas abertas, servicos e versoes relevantes identificadas.
+% incluir comandos executados em blocos de codigo e outputs truncados pertinentes.
+% regra: nao incluir informacoes obtidas apos o foothold inicial.
+\section{Reconhecimento}
+
+Iniciou-se a varredura de portas com o Nmap para mapear os servicos ativos no alvo, seguindo as diretrizes descritas em \cite{ref1}:
+
+\begin{lstlisting}[caption={Varredura de portas com Nmap}, label={lst:nmap}]
+nmap -sV <TARGET_IP>
+\end{lstlisting}
+
+O resultado da varredura pode ser visualizado na Figura \ref{fig:nmap}, evidenciando os servicos encontrados.
+
+\begin{figure}[h!]
+    \centering
+    % substitua 'example-image' pelo screenshot real
+    \includegraphics[width=0.45\textwidth]{example-image}
+    \caption{Servicos identificados no alvo via Nmap.}
+    \label{fig:nmap}
+\end{figure}
+
+% 2.5. exploracao
+% descricao tecnica detalhada do vetor de entrada e raciocinio que levou a vulnerabilidade.
+% incluir scripts, exploits ou payloads utilizados (comentados) e justificativa dos passos.
+% prints obrigatorios evidenciando o acesso inicial obtido (com placeholder para dados sensiveis).
+\section{Exploração}
+
+
+% 2.6. movimentacao lateral (se aplicavel)
+% aplicavel quando ha multiplos usuarios no sistema ou necessidade de pivoting entre servicos.
+% detalhar a escalada horizontal com comandos, raciocinio e evidencias necessarias.
+\section{Movimentação Lateral}
+
+
+% 2.7. escalada de privilegios
+% descrever o vetor de privesc vertical, o processo de enumeracao local que o revelou
+% (ex: linpeas, sudo -l, capabilities, binarios suid) e a exploracao realizada.
+% incluir o comando final e captura que comprove o acesso root/system e as flags com placeholder.
+\section{Escalada de Privilégios}
+
+
+% 2.8. conclusao
+% resumo tecnico de 3 a 5 linhas sintetizando a cadeia de exploracao completa,
+% do reconhecimento a captura final da flag.
+\section{Conclusão}
+
+\section{Referências}
+
+% 2.9. referencias
+% espaco destinado as fontes utilizadas para a exploracao:
+% links dos repositorios de exploits publicos, documentacoes e cves correspondentes.
+\begin{thebibliography}{9}
+    \bibitem{ref1}
+    \textbf{OWASP / CVE / Nome da Vulnerabilidade}: Breve descrição técnica do vetor abordado, documentação ou payload de referência. \\
+    Disponível em: \url{https://exemplo.com/artigo-ou-documentacao}
+    
+    \bibitem{ref2}
+    \textbf{Repositório / Autor do Exploit}: Detalhes do exploit público, script ou ferramenta utilizada durante a exploração. \\
+    Disponível em: \url{https://github.com/exemplo/repositorio-exploit}
+
+\end{thebibliography}
+
+\end{document}
