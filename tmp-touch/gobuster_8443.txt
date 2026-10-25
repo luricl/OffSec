@@ -1,0 +1,3 @@
+/api                 [33m (Status: 403)[0m [Size: 35]
+/favicon.ico         [32m (Status: 200)[0m [Size: 452]
+/login               [32m (Status: 200)[0m [Size: 3572]

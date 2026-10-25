@@ -3,3 +3,8 @@
 	- **`-sV`**: Ativa a **detecção de versão** dos serviços rodando nas portas abertas.
     - **`-T4`**: Define um perfil de **velocidade mais rápido** (agressivo), ideal para redes locais ou alvos que respondem bem, economizando tempo.
     - **`-p-`**: Varre **todas as 65.535 portas** TCP (por padrão, o Nmap varre apenas as 1000 mais comuns).
+    - `-Pn`: Pula o ping
+- `find . -type d -iname "nome_diretorio"`
+	- Encontra qualquer diretório com o nome especificado
+	- `iname`: nome case insensitive
+	- `-type d`: busca pelo tipo diretório. `f` busca pelo tipo arquivo
